@@ -1,9 +1,10 @@
 """Flask App for Flask Cafe."""
 
-from flask import Flask, render_template
+from flask import Flask, render_template, flash, redirect
 from flask_debugtoolbar import DebugToolbarExtension
 import os
 
+from forms import AddCafeForm
 from models import db, connect_db, Cafe, City
 
 
@@ -86,3 +87,32 @@ def cafe_detail(cafe_id):
         'cafe/detail.html',
         cafe=cafe,
     )
+
+@app.route('/cafes/add', methods= ['GET','POST'])
+def add_cafe():
+    """Show Form / Add Cafe"""
+
+    form = AddCafeForm()
+    form.city_code.choices = City.choices_vocab()
+
+    if form.validate_on_submit():
+        cafe = Cafe(
+            name=form.name.data,
+            description=form.description.data,
+            url=form.url.data,
+            address=form.address.data,
+            city_code=form.city_code.data,
+            image_url=form.image_url.data or None,
+        )
+
+        db.session.add(cafe)
+        db.session.commit()
+
+        flash(f"{cafe.name} added.", "success")
+        return redirect(f"/cafes/{cafe.id}")
+
+    return render_template('/cafe/add-form.html', form=form)
+
+@app.route('/cafes/<int:cafe_id>/edit', methods= ['GET','POST'])
+def edit_cafe():
+    """Show Edit Form / Edit Cafe Details"""

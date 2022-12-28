@@ -1,11 +1,11 @@
 """Data models for Flask Cafe"""
 
 
-from flask_bcrypt import Bcrypt
+# from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 
 
-bcrypt = Bcrypt()
+# bcrypt = Bcrypt()
 db = SQLAlchemy()
 
 
@@ -28,6 +28,13 @@ class City(db.Model):
         db.String(2),
         nullable=False,
     )
+
+    @classmethod
+    def choices_vocab(cls):
+        """Return vocabulary of choices of cities."""
+
+        cities = cls.query.order_by('name').all()
+        return [(c.code, c.name) for c in cities]
 
 
 class Cafe(db.Model):

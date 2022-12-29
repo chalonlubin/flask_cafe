@@ -1,10 +1,9 @@
 """Tests for Flask Cafe."""
 
-
 import re
 from unittest import TestCase
 
-from flask import session
+# from flask import session
 from app import app  # , CURR_USER_KEY
 from models import db, Cafe, City, connect_db  # , User, Like
 
@@ -155,8 +154,9 @@ class CityModelTestCase(TestCase):
         City.query.delete()
         db.session.commit()
 
-    # depending on how you solve exercise, you may have things to test on
-    # the City model, so here's a good place to put that stuff.
+    def test_choices_vocab(self):
+        choices = City.choices_vocab()
+        self.assertEqual(choices, [('sf', 'San Francisco')])
 
 
 #######################################
@@ -227,7 +227,8 @@ class CafeViewsTestCase(TestCase):
 
     def test_detail(self):
         with app.test_client() as client:
-            resp = client.get(f"/cafes/{self.cafe_id}")
+            id = self.cafe_id
+            resp = client.get(f"/cafes/{id}")
             self.assertEqual(resp.status_code, 200)
             self.assertIn(b"Test Cafe", resp.data)
             self.assertIn(b'testcafe.com', resp.data)
@@ -271,7 +272,6 @@ class CafeAdminViewsTestCase(TestCase):
             self.assertIn(b'added', resp.data)
 
     def test_dynamic_cities_vocab(self):
-       id = self.cafe_id
 
        # the following is a regular expression for the HTML for the drop-down
        # menu pattern we want to check for
@@ -280,6 +280,7 @@ class CafeAdminViewsTestCase(TestCase):
            r'San Francisco</option></select>')
 
        with app.test_client() as client:
+           id = self.cafe_id
            resp = client.get(f"/cafes/add")
            self.assertRegex(resp.data.decode('utf8'), choices_pattern)
 
@@ -287,9 +288,9 @@ class CafeAdminViewsTestCase(TestCase):
            self.assertRegex(resp.data.decode('utf8'), choices_pattern)
 
     def test_edit(self):
-        id = self.cafe_id
 
         with app.test_client() as client:
+            id = self.cafe_id
             resp = client.get(f"/cafes/{id}/edit", follow_redirects=True)
             self.assertIn(b'Edit Test Cafe', resp.data)
 
@@ -300,9 +301,9 @@ class CafeAdminViewsTestCase(TestCase):
             self.assertIn(b'edited', resp.data)
 
     def test_edit_form_shows_curr_data(self):
-       id = self.cafe_id
 
        with app.test_client() as client:
+           id = self.cafe_id
            resp = client.get(f"/cafes/{id}/edit", follow_redirects=True)
            self.assertIn(b'Test description', resp.data)
 

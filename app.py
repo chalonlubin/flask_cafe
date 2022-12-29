@@ -4,7 +4,7 @@ from flask import Flask, render_template, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 import os
 
-from forms import AddCafeForm, SignupForm
+from forms import AddCafeForm, SignupForm, LoginForm
 from models import db, connect_db, Cafe, City, User
 from sqlalchemy.exc import IntegrityError
 
@@ -51,23 +51,6 @@ def do_logout():
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
 
-
-#######################################
-# homepage
-
-@app.get("/")
-def homepage():
-    """Show homepage."""
-    if not g.user:
-        flash(NOT_LOGGED_IN_MSG, "danger")
-        return redirect("/login")
-
-    return render_template("homepage.html")
-
-
-#######################################
-# cafes
-
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
     """Handle user signup.
@@ -111,6 +94,50 @@ def signup():
         return render_template('auth/signup-form.html', form=form)
 
 
+@app.route('/login', methods=["GET", "POST"])
+def login():
+    """Handle user login. Redirects on success to cafe list."""
+
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        user = User.authenticate(form.username.data, form.password.data)
+
+        if user:
+            do_login()
+            flash(f"Hello, {user.username}!", "success")
+            return redirect("/cafes")
+
+        flash("Invalid credentials.", 'danger')
+
+    return render_template('auth/login-form.html', form=form)
+
+@app.post('/logout')
+def logout():
+    """Handle logout of user. Redirects to homepage."""
+
+    do_logout()
+
+    flash("You have successfully logged out.", 'success')
+    return redirect("/")
+
+#######################################
+# homepage
+
+@app.get("/")
+def homepage():
+    """Show homepage."""
+    if not g.user:
+        flash(NOT_LOGGED_IN_MSG, "danger")
+        return redirect("/login")
+
+    return render_template("homepage.html")
+
+
+#######################################
+# cafes
+
+
 @app.get('/cafes')
 def cafe_list():
     """Return list of all cafes."""
@@ -134,7 +161,8 @@ def cafe_detail(cafe_id):
         cafe=cafe,
     )
 
-@app.route('/cafes/add', methods= ['GET','POST'])
+
+@app.route('/cafes/add', methods=['GET', 'POST'])
 def add_cafe():
     """Show Form / Add Cafe"""
 
@@ -159,7 +187,8 @@ def add_cafe():
 
     return render_template('/cafe/add-form.html', form=form)
 
-@app.route('/cafes/<int:cafe_id>/edit', methods=['GET','POST'])
+
+@app.route('/cafes/<int:cafe_id>/edit', methods=['GET', 'POST'])
 def edit_cafe(cafe_id):
     """Show Edit Form / Edit Cafe Details"""
 
@@ -168,12 +197,12 @@ def edit_cafe(cafe_id):
     form.city_code.choices = City.choices_vocab()
 
     if form.validate_on_submit():
-        cafe.name=form.name.data,
-        cafe.description=form.description.data,
-        cafe.url=form.url.data,
-        cafe.address=form.address.data,
-        cafe.city_code=form.city_code.data,
-        cafe.image_url=form.image_url.data or None
+        cafe.name = form.name.data,
+        cafe.description = form.description.data,
+        cafe.url = form.url.data,
+        cafe.address = form.address.data,
+        cafe.city_code = form.city_code.data,
+        cafe.image_url = form.image_url.data or None
 
         db.session.commit()
 
@@ -182,5 +211,3 @@ def edit_cafe(cafe_id):
 
     else:
         return render_template('cafe/edit-form.html', cafe=cafe, form=form)
-
-

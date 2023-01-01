@@ -4,7 +4,7 @@ from flask import Flask, render_template, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 import os
 
-from forms import AddCafeForm, SignupForm, LoginForm
+from forms import AddCafeForm, SignupForm, LoginForm, ProfileEditForm
 from models import db, connect_db, Cafe, City, User
 from sqlalchemy.exc import IntegrityError
 
@@ -50,6 +50,7 @@ def do_logout():
 
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
+
 
 @app.route('/signup', methods=["GET", "POST"])
 def signup():
@@ -112,6 +113,7 @@ def login():
 
     return render_template('auth/login-form.html', form=form)
 
+
 @app.post('/logout')
 def logout():
     """Handle logout of user. Redirects to homepage."""
@@ -123,6 +125,7 @@ def logout():
 
 #######################################
 # homepage
+
 
 @app.get("/")
 def homepage():
@@ -211,3 +214,46 @@ def edit_cafe(cafe_id):
 
     else:
         return render_template('cafe/edit-form.html', cafe=cafe, form=form)
+
+
+# User Profile
+
+@app.get('/profile')
+def show_profile():
+    """Show the user's detail page."""
+
+    if not g.user:
+        flash(NOT_LOGGED_IN_MSG, "danger")
+        return redirect("/login")
+
+    return render_template("profile/detail.html", user=g.user)
+
+
+@app.route('/profile/edit', methods=['GET', 'POST'])
+def edit_profile():
+    """Show Edit Form or Edit User Details"""
+
+
+    if not g.user:
+        flash(NOT_LOGGED_IN_MSG, "danger")
+        return redirect("/login")
+
+    form = ProfileEditForm(obj=g.user)
+    user = g.user
+
+    if form.validate_on_submit():
+
+
+        user.first_name = form.first_name.data,
+        user.last_name = form.last_name.data,
+        user.description = form.description.data,
+        user.email = form.email.data,
+        user.image_url = form.image_url.data
+        db.session.commit()
+
+        flash("Profile edited", "success")
+        return redirect("/profile")
+
+    return render_template('profile/edit-form.html', form=form)
+
+

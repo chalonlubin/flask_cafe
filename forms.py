@@ -34,3 +34,12 @@ class LoginForm(FlaskForm):
 
     username = StringField('Username', validators=[InputRequired()])
     password = PasswordField('Password', validators=[InputRequired()])
+
+class ProfileEditForm(FlaskForm):
+    """ Form for editing user."""
+
+    first_name = StringField('First Name', validators=[InputRequired()])
+    last_name = StringField('Last Name', validators=[InputRequired()])
+    description = TextAreaField('Description')
+    email = StringField('Email', validators=[email(), InputRequired()])
+    image_url = StringField('Image', validators=[URL(), Optional()])

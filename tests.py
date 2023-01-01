@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from flask import session
 from app import app, CURR_USER_KEY
-from models import db, Cafe, City, connect_db, User # Like
+from models import db, Cafe, City, connect_db, User  # Like
 
 # Use test database and don't clutter tests with SQL
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql:///flaskcafe_test"
@@ -273,19 +273,19 @@ class CafeAdminViewsTestCase(TestCase):
 
     def test_dynamic_cities_vocab(self):
 
-       # the following is a regular expression for the HTML for the drop-down
-       # menu pattern we want to check for
-       choices_pattern = re.compile(
-           r'<select [^>]*name="city_code"[^>]*><option [^>]*value="sf">' +
-           r'San Francisco</option></select>')
+        # the following is a regular expression for the HTML for the drop-down
+        # menu pattern we want to check for
+        choices_pattern = re.compile(
+            r'<select [^>]*name="city_code"[^>]*><option [^>]*value="sf">' +
+            r'San Francisco</option></select>')
 
-       with app.test_client() as client:
-           id = self.cafe_id
-           resp = client.get(f"/cafes/add")
-           self.assertRegex(resp.data.decode('utf8'), choices_pattern)
+        with app.test_client() as client:
+            id = self.cafe_id
+            resp = client.get(f"/cafes/add")
+            self.assertRegex(resp.data.decode('utf8'), choices_pattern)
 
-           resp = client.get(f"/cafes/{id}/edit")
-           self.assertRegex(resp.data.decode('utf8'), choices_pattern)
+            resp = client.get(f"/cafes/{id}/edit")
+            self.assertRegex(resp.data.decode('utf8'), choices_pattern)
 
     def test_edit(self):
 
@@ -302,10 +302,10 @@ class CafeAdminViewsTestCase(TestCase):
 
     def test_edit_form_shows_curr_data(self):
 
-       with app.test_client() as client:
-           id = self.cafe_id
-           resp = client.get(f"/cafes/{id}/edit", follow_redirects=True)
-           self.assertIn(b'Test description', resp.data)
+        with app.test_client() as client:
+            id = self.cafe_id
+            resp = client.get(f"/cafes/{id}/edit", follow_redirects=True)
+            self.assertIn(b'Test description', resp.data)
 
 
 #######################################
@@ -461,49 +461,73 @@ class NavBarTestCase(TestCase):
             self.assertNotIn(b'/profile', resp.data)
             self.assertNotIn(b'Log Out', resp.data)
 
-
     def test_logged_in_navbar(self):
         with app.test_client() as client:
             login_for_test(client, self.user_id)
-            resp= client.get("/cafes")
+            resp = client.get("/cafes")
             self.assertIn(b'Log Out', resp.data)
             self.assertIn(b'/profile', resp.data)
             self.assertNotIn(b'Log In', resp.data)
             self.assertNotIn(b'Sign Up', resp.data)
 
 
-# class ProfileViewsTestCase(TestCase):
-#     """Tests for views on user profiles."""
+class ProfileViewsTestCase(TestCase):
+    """Tests for views on user profiles."""
 
-#     def setUp(self):
-#         """Before each test, add sample user."""
+    def setUp(self):
+        """Before each test, add sample user."""
 
-#         User.query.delete()
+        User.query.delete()
 
-#         user = User.register(**TEST_USER_DATA)
-#         db.session.add(user)
+        user = User.register(**TEST_USER_DATA)
+        db.session.add(user)
 
-#         db.session.commit()
+        db.session.commit()
 
-#         self.user_id = user.id
+        self.user_id = user.id
 
-#     def tearDown(self):
-#         """After each test, remove all users."""
+    def tearDown(self):
+        """After each test, remove all users."""
 
-#         User.query.delete()
-#         db.session.commit()
+        User.query.delete()
+        db.session.commit()
 
-#     def test_anon_profile(self):
-#         self.fail("FIXME: write this test")
+    def test_anon_profile(self):
+        with app.test_client() as client:
+            resp = client.get("/profile", follow_redirects=True)
+            self.assertIn(b'not logged in', resp.data)
+            self.assertIn(b'Welcome', resp.data)
 
-#     def test_logged_in_profile(self):
-#         self.fail("FIXME: write this test")
+    def test_logged_in_profile(self):
+        with app.test_client() as client:
+            login_for_test(client, self.user_id)
+            resp = client.get("/profile", follow_redirects=True)
+            self.assertNotIn(b'not logged in', resp.data)
+            self.assertIn(b'/profile/edit', resp.data)
 
-#     def test_anon_profile_edit(self):
-#         self.fail("FIXME: write this test")
+    def test_anon_profile_edit(self):
+        with app.test_client() as client:
+            resp = client.get("/profile/edit", follow_redirects=True)
+            self.assertIn(b'not logged in', resp.data)
 
-#     def test_logged_in_profile_edit(self):
-#         self.fail("FIXME: write this test")
+            resp = client.post("/profile/edit", follow_redirects=True)
+            self.assertIn(b'not logged in.', resp.data)
+
+    def test_logged_in_profile_edit(self):
+        with app.test_client() as client:
+            login_for_test(client, self.user_id)
+            resp = client.get("/profile/edit")
+            self.assertIn(b'Edit Profile', resp.data)
+
+            resp = client.post(
+                "/profile/edit",
+                data=TEST_USER_DATA_EDIT,
+                follow_redirects=True)
+
+            self.assertIn(b'new-fn new-ln', resp.data)
+            self.assertIn(b'new-description', resp.data)
+            self.assertIn(b'new-email', resp.data)
+            self.assertIn(b'new-image', resp.data)
 
 
 #######################################

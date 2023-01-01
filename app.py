@@ -104,7 +104,7 @@ def login():
         user = User.authenticate(form.username.data, form.password.data)
 
         if user:
-            do_login()
+            do_login(user)
             flash(f"Hello, {user.username}!", "success")
             return redirect("/cafes")
 

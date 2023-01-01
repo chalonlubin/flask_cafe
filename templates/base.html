@@ -38,11 +38,11 @@
           {% endif %}
         </li>
       </ul>
-      <form class="form-inline my-2 my-lg-0">
+      {% if g.user %}
+      <form class="form-inline my-2 my-lg-0" method="POST" action="/logout">
         <button class="btn-sm btn btn-outline-light">Log Out</button>
       </form>
-
-
+      {% endif %}
     </div>
   </nav>
 
